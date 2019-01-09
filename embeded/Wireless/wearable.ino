@@ -32,8 +32,6 @@ void loop() {
     data[a]='\0';
   }
 
-  //  current=map(current, 1023, 0, 0, 1023);
-
   current1 = Dxl.readWord(19, 36);
   current1=map(current1, 1023, 0, 0, 1023);
 
@@ -55,7 +53,6 @@ void loop() {
 
   sprintf(data,"%ld,%ld,%ld,%ld,%d,%d,%d,%d,%d,%d,%d", current1, current2, current3, current4, b1, b2, b3, b4, b5, b6, b7);
 
-
   for(int c=0;c<=100;c++) {
     SerialUSB.print(data[c]);
     Serial3.write(data[c]);
@@ -67,9 +64,3 @@ void loop() {
   }
   delay(300);//250 yes 220no
 }
-
-
-
-
-
-

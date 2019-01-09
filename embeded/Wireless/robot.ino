@@ -40,7 +40,6 @@ boolean grip = false;
 
 char input[100];
 
-
 int for3;
 
 void loop() {
@@ -79,79 +78,10 @@ void loop() {
     Dxl.writeWord(8, 30, 550);
   }
 
-
-//  if (for3 < ldata[0]) {
-//    for (int a = ldata[0]; a > for3; a--) {
-//      Dxl.writeWord(3, 30, a);
-//    }
-//  } 
-//  else if (ldata[0] < for3) {
-//    for (int a = ldata[0]; a < for3; a++) {
-//      Dxl.writeWord(3, 30, a);
-//    }
-//  }
-//  else if(ldata[0]==for3){
-//    Dxl.writeWord(3, 30, for3);
-//  }
-//  
-//  if (data[1] < ldata[1]) {
-//    for (int a = ldata[1]; a > data[1]; a--) {
-//      Dxl.writeWord(1, 30, a);
-//    }
-//  } 
-//  else if (ldata[1] < data[1]) {
-//    for (int a = ldata[1]; a < data[1]; a++) {
-//      Dxl.writeWord(1, 30, a);
-//    }
-//  } 
-//  else if(ldata[1]==data[1]){
-//    Dxl.writeWord(1, 30, data[1]);
-//  }
-//
-//  if (data[2] < ldata[2]) {
-//    for (int a = ldata[2]; a > data[2]; a--) {
-//      Dxl.writeWord(7, 30, a);
-//    }
-//  } 
-//  else if (ldata[3] < data[3]) {
-//    for (int a = ldata[3]; a < data[3]; a++) {
-//      Dxl.writeWord(7, 30, a);
-//    }
-//  }
-//  else if(ldata[3]==data[3]){
-//    Dxl.writeWord(7, 30, data[3]);
-//  }
-  
-//  if (data[3] < ldata[3]) {
-//    for (int a = ldata[3]; a > data[3]; a--) {
-//      Dxl.writeWord(5, 30, a);
-//    }
-//  } 
-//  else if (ldata[3] < data[3]) {
-//    for (int a = ldata[3]; a < data[3] ; a++) {
-//      Dxl.writeWord(5, 30, a);
-//    }
-//  }
-//  else if(ldata[3]==data[3]){
-//    Dxl.writeWord(5, 30, data[4]);
-//  }
-
-//  ldata[0]=for3;
-//  ldata[1]=data[1];
-//  ldata[2]=data[2];
-//  ldata[3]=data[3];
-
-
-
-
-
-
-
-
   Dxl.writeWord(3, 30, for3);
   Dxl.writeWord(1, 30, data[1]);
   
-//  Dxl.writeWord(5,30,data[3]);
+  Dxl.writeWord(5,30,data[3]);
   Dxl.writeWord(7, 30, data[2]);
 
   if (data[4] == 0 && data[5] == 0)
@@ -326,7 +256,3 @@ void posreset() {
   Dxl.goalSpeed(13, 0);
   return;
 }
-
-
-
-

@@ -111,7 +111,6 @@ void loop() {
   else posreset();
 }
 
-
 void left() {
   Dxl.writeWord(10, 32, spda);
   Dxl.writeWord(11, 32, spdb);
@@ -209,7 +208,3 @@ void posreset() {
   Dxl.goalSpeed(13, 0);
   return;
 }
-
-
-
-
