@@ -20,6 +20,14 @@ const float DXL_PROTOCOL_VERSION = 1.0;
 
 using namespace ControlTableItem;
 
+#define B1 12
+#define B2 27
+#define B3 14
+#define B4 17 //17
+#define B5 5 //5
+#define B6 19//19
+#define B7 18//18
+
 class NewSerialPortHandler : public DYNAMIXEL::SerialPortHandler {
 public:
   NewSerialPortHandler(HardwareSerial& port, const int dir_pin = -1)
@@ -69,9 +77,27 @@ void setTorqueOff(uint8_t dxl_id) {
   dxl.writeControlTableItem(GOAL_TORQUE, dxl_id, 0);
 }
 
+int readButton(void) {
+  if(digitalRead(B1)==0) return 1;
+  else if(digitalRead(B2)==0) return 2;
+  else if(digitalRead(B3)==0) return 3;
+  else if(digitalRead(B4)==0) return 4;
+  else if(digitalRead(B5)==0) return 5;
+  else if(digitalRead(B6)==0) return 6;
+  else if(digitalRead(B7)==0) return 7;
+  else return 0;
+}
+
 
 void setup() {
   Serial.begin(115200);
+  pinMode(B1, INPUT_PULLUP);
+  pinMode(B2, INPUT_PULLUP);
+  pinMode(B3, INPUT_PULLUP);
+  pinMode(B4, INPUT_PULLUP);
+  pinMode(B5, INPUT_PULLUP);
+  pinMode(B6, INPUT_PULLUP);
+  pinMode(B7, INPUT_PULLUP);
 
   WiFi.begin(ssid, password);
 
@@ -147,27 +173,17 @@ void loop() {
       data += ':';
       data += prevPosition[i];
     }
-    // int delta = abs(newPosition[i] - prevPosition[i]);
-    // if (delta <= 20) {
-    //   data += newPosition[i];
-    //   prevPosition[i] = newPosition[i];
-    // } else {
-    //   delay(10);
-    //   newPosition[i] = dxl.getPresentPosition(7);
-    //   if (abs(newPosition[i] - prevPosition[i]) <= 20) {
-    //     data += newPosition[i];
-    //     prevPosition[i] = newPosition[i];
-    //   } else data += prevPosition[i];
-    // }
     i++;
     if (i == NUM_OF_DXL) {
+      data += ",100:";
+      data += readButton();
       data += '$';
       break;
     }
     data += ',';
   }
   unsigned long currentMillis = millis();
-  if (currentMillis - previousMillis >= 20) {  //20에서 낫뱃(뚝뚝거리긴함), 50에서 무난, 10이하는 통신문제, 5로 해보기, 17무난
+  if (currentMillis - previousMillis >= 20) {
     Serial.println(data);
     udp.beginPacket(host, port);
     udp.print(data);
