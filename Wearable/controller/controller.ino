@@ -20,13 +20,13 @@ const float DXL_PROTOCOL_VERSION = 1.0;
 
 using namespace ControlTableItem;
 
-#define B1 12
+#define B1 13
 #define B2 27
 #define B3 14
-#define B4 17 //17
-#define B5 5 //5
-#define B6 19//19
-#define B7 18//18
+#define B4 15
+#define B5 2
+#define B6 23
+#define B7 22
 
 class NewSerialPortHandler : public DYNAMIXEL::SerialPortHandler {
 public:
@@ -84,7 +84,6 @@ int readButton(void) {
   else if(digitalRead(B4)==0) return 4;
   else if(digitalRead(B5)==0) return 5;
   else if(digitalRead(B6)==0) return 6;
-  else if(digitalRead(B7)==0) return 7;
   else return 0;
 }
 
@@ -177,6 +176,14 @@ void loop() {
     if (i == NUM_OF_DXL) {
       data += ",100:";
       data += readButton();
+      if(digitalRead(B7)==0) {
+        data += ",200:";
+        data += 1;
+      }
+      else {
+        data += ",200:";
+        data += 0;
+      }
       data += '$';
       break;
     }

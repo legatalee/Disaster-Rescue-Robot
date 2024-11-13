@@ -102,6 +102,10 @@ void loop() {
           else if(position==6) turnr();
           else if(position==7) SerialUSB.println("gripper!");
         }
+        if (servoId==200) {
+          if(position==0) Dxl.writeWord(9, 30, 550);
+          else if(position==1) Dxl.writeWord(9, 30, 300);
+        }
         else if (position > 0 && position < 1023) {
           Dxl.writeWord(servoId, 30, position);
           prevPosition[servoId] = position;
