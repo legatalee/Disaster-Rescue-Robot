@@ -146,16 +146,16 @@ void backward() { //2
   return;
 }
 void left() { //3
-  Dxl.writeWord(11, 32, spda);
-  Dxl.writeWord(12, 32, spdb);
+  Dxl.writeWord(11, 32, spdb);
+  Dxl.writeWord(12, 32, spda);
   Dxl.writeWord(13, 32, spda);
   Dxl.writeWord(14, 32, spdb);
   delay(1);
   return;
 }
 void right() { //4
-  Dxl.writeWord(11, 32, spdb);
-  Dxl.writeWord(12, 32, spda);
+  Dxl.writeWord(11, 32, spda);
+  Dxl.writeWord(12, 32, spdb);
   Dxl.writeWord(13, 32, spdb);
   Dxl.writeWord(14, 32, spda);
   delay(1);
