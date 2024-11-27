@@ -54,8 +54,9 @@ void setup() {
 
 boolean b1, b2, b3, b4, b5, b6, b7;
 
-int spda = 523;
-int spdb = 1546;
+int speed = 1000;
+int spda = speed;
+int spdb = 1023 + speed;
 
 char data[100];
 int prevPosition[20] = {

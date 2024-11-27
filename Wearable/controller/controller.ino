@@ -144,25 +144,38 @@ void loop() {
   // }
   // while (client.connected()) {
   newPosition[0] = dxl.getPresentPosition(1);
-  // newPosition[1] = dxl.getPresentPosition(2);
+  newPosition[1] = dxl.getPresentPosition(2);
   newPosition[2] = dxl.getPresentPosition(3);
   if (newPosition[2] > 513)
     newPosition[2] = 513;
-  // newPosition[3] = dxl.getPresentPosition(4);
+  newPosition[3] = dxl.getPresentPosition(4);
+  if (newPosition[3] < 512)
+    newPosition[3] = 512;
   newPosition[4] = dxl.getPresentPosition(5);
   newPosition[4] = map(newPosition[4], 1023, 0, 0, 1023);
-  // newPosition[5] = dxl.getPresentPosition(6);
+  newPosition[5] = dxl.getPresentPosition(6);
+  newPosition[5] = map(newPosition[5], 0, 1023, 1023, 0);
+
   newPosition[6] = dxl.getPresentPosition(7);
   newPosition[6] = map(newPosition[6], 1023, 0, 0, 2048);
   newPosition[6] -= 850;
   if (newPosition[6] < 200)
     newPosition[6] = 200;
-  // newPosition[7] = dxl.getPresentPosition(8);
+
+  newPosition[7] = dxl.getPresentPosition(8);
+  newPosition[7] = map(newPosition[7], 0, 1023, 1023, 0);
+  newPosition[7] = map(newPosition[7], 1023, 0, 0, 2048);
+  newPosition[7] -= 850;
+  newPosition[7] = map(newPosition[7], 1023, 0, 0, 1023);
+  if (newPosition[7] < 350)
+    newPosition[7] = 350;
+  if (newPosition[7] > 823)
+    newPosition[7] = 823;
 
   String data = "";
   int i = 0;
   while (1) {
-    if (((prevPosition[i] + 100) > newPosition[i]) && ((prevPosition[i] - 100) < newPosition[i])) {
+    if (((prevPosition[i] + 200) > newPosition[i]) && ((prevPosition[i] - 200) < newPosition[i])) {
       data += id[i];
       data += ':';
       data += newPosition[i];
