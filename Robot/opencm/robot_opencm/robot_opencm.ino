@@ -97,15 +97,15 @@ void loop() {
           if(position==0) stop();
           else if(position==1) forward();
           else if(position==2) backward();
-          else if(position==3) left();
-          else if(position==4) right();
-          else if(position==5) turnl();
-          else if(position==6) turnr();
+          else if(position==3) turnl();
+          else if(position==4) turnr();
+          else if(position==5) left();
+          else if(position==6) right();
           else if(position==7) SerialUSB.println("gripper!");
         }
         if (servoId==200) {
-          if(position==0) Dxl.writeWord(9, 30, 550);
-          else if(position==1) Dxl.writeWord(9, 30, 300);
+          if(position==0) Dxl.writeWord(9, 30, 500`);
+          else if(position==1) Dxl.writeWord(9, 30, 330);
         }
         else if (position > 0 && position < 1023) {
           Dxl.writeWord(servoId, 30, position);

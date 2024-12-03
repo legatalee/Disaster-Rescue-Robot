@@ -145,12 +145,14 @@ void loop() {
   // while (client.connected()) {
   newPosition[0] = dxl.getPresentPosition(1);
   newPosition[1] = dxl.getPresentPosition(2);
+  if (newPosition[1] > 810)
+    newPosition[1] = 810;
   newPosition[2] = dxl.getPresentPosition(3);
-  if (newPosition[2] > 513)
-    newPosition[2] = 513;
+  if (newPosition[2] > 511)
+    newPosition[2] = 511;
   newPosition[3] = dxl.getPresentPosition(4);
-  if (newPosition[3] < 512)
-    newPosition[3] = 512;
+  if (newPosition[3] < 513)
+    newPosition[3] = 513;
   newPosition[4] = dxl.getPresentPosition(5);
   newPosition[4] = map(newPosition[4], 1023, 0, 0, 1023);
   newPosition[5] = dxl.getPresentPosition(6);
