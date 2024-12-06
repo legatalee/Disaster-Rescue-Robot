@@ -20,6 +20,14 @@ const float DXL_PROTOCOL_VERSION = 1.0;
 
 using namespace ControlTableItem;
 
+#define B1 13
+#define B2 27
+#define B3 14
+#define B4 15
+#define B5 2
+#define B6 23
+#define B7 22
+
 class NewSerialPortHandler : public DYNAMIXEL::SerialPortHandler {
 public:
   NewSerialPortHandler(HardwareSerial& port, const int dir_pin = -1)
@@ -69,9 +77,26 @@ void setTorqueOff(uint8_t dxl_id) {
   dxl.writeControlTableItem(GOAL_TORQUE, dxl_id, 0);
 }
 
+int readButton(void) {
+  if(digitalRead(B1)==0) return 1;
+  else if(digitalRead(B2)==0) return 2;
+  else if(digitalRead(B3)==0) return 3;
+  else if(digitalRead(B4)==0) return 4;
+  else if(digitalRead(B5)==0) return 5;
+  else if(digitalRead(B6)==0) return 6;
+  else return 0;
+}
+
 
 void setup() {
   Serial.begin(115200);
+  pinMode(B1, INPUT_PULLUP);
+  pinMode(B2, INPUT_PULLUP);
+  pinMode(B3, INPUT_PULLUP);
+  pinMode(B4, INPUT_PULLUP);
+  pinMode(B5, INPUT_PULLUP);
+  pinMode(B6, INPUT_PULLUP);
+  pinMode(B7, INPUT_PULLUP);
 
   WiFi.begin(ssid, password);
 
@@ -119,25 +144,40 @@ void loop() {
   // }
   // while (client.connected()) {
   newPosition[0] = dxl.getPresentPosition(1);
-  // newPosition[1] = dxl.getPresentPosition(2);
+  newPosition[1] = dxl.getPresentPosition(2);
+  if (newPosition[1] > 810)
+    newPosition[1] = 810;
   newPosition[2] = dxl.getPresentPosition(3);
-  if (newPosition[2] > 513)
-    newPosition[2] = 513;
-  // newPosition[3] = dxl.getPresentPosition(4);
+  if (newPosition[2] > 511)
+    newPosition[2] = 511;
+  newPosition[3] = dxl.getPresentPosition(4);
+  if (newPosition[3] < 513)
+    newPosition[3] = 513;
   newPosition[4] = dxl.getPresentPosition(5);
   newPosition[4] = map(newPosition[4], 1023, 0, 0, 1023);
-  // newPosition[5] = dxl.getPresentPosition(6);
+  newPosition[5] = dxl.getPresentPosition(6);
+  newPosition[5] = map(newPosition[5], 0, 1023, 1023, 0);
+
   newPosition[6] = dxl.getPresentPosition(7);
   newPosition[6] = map(newPosition[6], 1023, 0, 0, 2048);
   newPosition[6] -= 850;
   if (newPosition[6] < 200)
     newPosition[6] = 200;
-  // newPosition[7] = dxl.getPresentPosition(8);
+
+  newPosition[7] = dxl.getPresentPosition(8);
+  newPosition[7] = map(newPosition[7], 0, 1023, 1023, 0);
+  newPosition[7] = map(newPosition[7], 1023, 0, 0, 2048);
+  newPosition[7] -= 850;
+  newPosition[7] = map(newPosition[7], 1023, 0, 0, 1023);
+  if (newPosition[7] < 350)
+    newPosition[7] = 350;
+  if (newPosition[7] > 823)
+    newPosition[7] = 823;
 
   String data = "";
   int i = 0;
   while (1) {
-    if (((prevPosition[i] + 100) > newPosition[i]) && ((prevPosition[i] - 100) < newPosition[i])) {
+    if (((prevPosition[i] + 200) > newPosition[i]) && ((prevPosition[i] - 200) < newPosition[i])) {
       data += id[i];
       data += ':';
       data += newPosition[i];
@@ -147,27 +187,25 @@ void loop() {
       data += ':';
       data += prevPosition[i];
     }
-    // int delta = abs(newPosition[i] - prevPosition[i]);
-    // if (delta <= 20) {
-    //   data += newPosition[i];
-    //   prevPosition[i] = newPosition[i];
-    // } else {
-    //   delay(10);
-    //   newPosition[i] = dxl.getPresentPosition(7);
-    //   if (abs(newPosition[i] - prevPosition[i]) <= 20) {
-    //     data += newPosition[i];
-    //     prevPosition[i] = newPosition[i];
-    //   } else data += prevPosition[i];
-    // }
     i++;
     if (i == NUM_OF_DXL) {
+      data += ",100:";
+      data += readButton();
+      if(digitalRead(B7)==0) {
+        data += ",200:";
+        data += 1;
+      }
+      else {
+        data += ",200:";
+        data += 0;
+      }
       data += '$';
       break;
     }
     data += ',';
   }
   unsigned long currentMillis = millis();
-  if (currentMillis - previousMillis >= 20) {  //20에서 낫뱃(뚝뚝거리긴함), 50에서 무난, 10이하는 통신문제, 5로 해보기, 17무난
+  if (currentMillis - previousMillis >= 20) {
     Serial.println(data);
     udp.beginPacket(host, port);
     udp.print(data);
