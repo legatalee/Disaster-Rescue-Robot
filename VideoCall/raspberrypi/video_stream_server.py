@@ -13,6 +13,9 @@ from picamera2.outputs import FileOutput
 import libcamera
 import amg8833_i2c
 import json
+import subprocess
+import socket
+import asyncio
 
 PAGE = """\
 <html>
@@ -72,41 +75,63 @@ PAGE = """\
     <h1>재난 구조 현장 화면</h1>
     <div class="container">
         <img src="stream.mjpg" />
-        <div id="grid"></div>
+        <canvas id="thermalCanvas" width="480" height="480"></canvas>
     </div>
+
     <script>
-    function tempToColor(temp) {
-        let r, g, b;
+    function tempToColor(temp, minTemp = 12, maxTemp = 43) {
+        const clampedTemp = Math.max(minTemp, Math.min(temp, maxTemp)); // Clamp temp to range
+        const ratio = (clampedTemp - minTemp) / (maxTemp - minTemp);
+        const r = Math.round(255 * (1 - ratio));
+        const b = Math.round(255 * ratio);
+        return `rgb(${r}, 0, ${b})`; // Gradient from blue to red
+    }
 
-        if (temp < 5) {
-            // 매우 차가운 온도는 보라색 계열
-            r = 128; g = 0; b = 128; // 보라색
-        } else if (temp < 15) {
-            // 0도에서 15도까지는 파란색 계열로 그라데이션
-            r = 0;
-            g = Math.round((temp / 15) * 255); // 0에서 255까지
-            b = 255;
-        } else if (temp < 25) {
-            // 15도에서 23도까지는 초록색 계열로 그라데이션
-            r = 0;
-            g = 255;
-            b = Math.round((1 - (temp - 15) / 8) * 255); // 255에서 0까지
-        } else if (temp < 35) {
-            // 23도에서 28도까지는 노란색 계열로 그라데이션
-            r = Math.round((temp - 23) / 5 * 255); // 0에서 255까지
-            g = 255;
-            b = 0;
-        } else if (temp < 60) {
-            // 28도에서 35도까지는 주황색 계열로 그라데이션
-            r = 255;
-            g = Math.round((1 - (temp - 28) / 7) * 255); // 255에서 0까지
-            b = 0;
-        } else {
-            // 35도 이상은 빨간색
-            r = 255; g = 0; b = 0; // 빨간색
+    function interpolateGrid(data, scale) {
+        const height = data.length;
+        const width = data[0].length;
+        const newHeight = height * scale;
+        const newWidth = width * scale;
+        const result = Array.from({ length: newHeight }, () =>
+            Array(newWidth).fill(0)
+        );
+
+        for (let y = 0; y < newHeight; y++) {
+            const y0 = Math.floor(y / scale);
+            const yT = (y / scale) - y0;
+            const yPoints = [
+                data[Math.max(0, y0 - 1)] || data[y0],
+                data[y0],
+                data[Math.min(height - 1, y0 + 1)] || data[y0],
+                data[Math.min(height - 1, y0 + 2)] || data[y0]
+            ];
+
+            for (let x = 0; x < newWidth; x++) {
+                const x0 = Math.floor(x / scale);
+                const xT = (x / scale) - x0;
+                const p = yPoints.map(row =>
+                    cubicInterpolate(
+                        row[Math.max(0, x0 - 1)] || row[x0],
+                        row[x0],
+                        row[Math.min(width - 1, x0 + 1)] || row[x0],
+                        row[Math.min(width - 1, x0 + 2)] || row[x0],
+                        xT
+                    )
+                );
+                result[y][x] = cubicInterpolate(p[0], p[1], p[2], p[3], yT);
+            }
         }
+        return result;
+    }
 
-        return `rgb(${r}, ${g}, ${b})`;
+    function cubicInterpolate(p0, p1, p2, p3, t) {
+        return (
+            0.5 *
+            ((-p0 + 3 * p1 - 3 * p2 + p3) * t * t * t +
+                (2 * p0 - 5 * p1 + 4 * p2 - p3) * t * t +
+                (-p0 + p2) * t +
+                2 * p1)
+        );
     }
 
     function fetchTemperature() {
@@ -115,6 +140,7 @@ PAGE = """\
             .then(data => {
                 const grid = document.getElementById("grid");
                 grid.innerHTML = "";  // 기존 그리드 비우기
+                console.log(data);
                 data.forEach((temp, index) => {
                     const cell = document.createElement("div");
                     cell.className = "cell";
@@ -128,7 +154,47 @@ PAGE = """\
             })
             .catch(error => console.error('온도 데이터 가져오기 오류:', error));
     }
-    setInterval(fetchTemperature, 1000); // 1초마다 온도 데이터 요청
+
+    function drawGrid(canvas, grid, minTemp = 12, maxTemp = 43) {
+        const ctx = canvas.getContext("2d");
+        const cellWidth = canvas.width / grid[0].length;
+        const cellHeight = canvas.height / grid.length;
+
+        // Clear the canvas before drawing
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        for (let y = 0; y < grid.length; y++) {
+            for (let x = 0; x < grid[0].length; x++) {
+                const temp = grid[y][x];
+                ctx.fillStyle = tempToColor(temp);
+                ctx.fillRect(x * cellWidth, y * cellHeight, cellWidth, cellHeight);
+            }
+        }
+    }
+
+    // Main loop
+    function main() {
+        const canvas = document.getElementById("thermalCanvas");
+        const scale = 6; // Interpolation scale factor
+
+        setInterval(() => {
+            fetch('/temperature')
+            .then(response => response.json())
+            .then(data => {
+                data.forEach((temp, index) => {
+                    const gridData = [];
+                    for (let i = 0; i < 8; i++) {
+                        gridData.push(data.slice(i * 8, (i + 1) * 8)); // 8개의 값을 한 줄로 묶어 8x8 그리드 생성
+                    }
+                    const interpolatedData = interpolateGrid(gridData, scale); // Interpolate
+                    drawGrid(canvas, interpolatedData); // Draw interpolated grid
+                });
+            })
+            .catch(error => console.error('온도 데이터 가져오기 오류:', error));
+        }, 300);
+    }
+
+    main();
 </script>
 </body>
 </html>
@@ -204,7 +270,7 @@ sensor = amg8833_i2c.AMG8833(addr=0x69)
 
 # Start video streaming
 picam2 = Picamera2(camera_num=0)
-picam2.configure(picam2.create_video_configuration(main={"size": (640, 480)}, transform=libcamera.Transform(hflip=1, vflip=1)))
+picam2.configure(picam2.create_video_configuration(main={"size": (720, 480)}, transform=libcamera.Transform(hflip=1, vflip=1)))
 output = StreamingOutput()
 picam2.start_recording(JpegEncoder(), FileOutput(output))
 
